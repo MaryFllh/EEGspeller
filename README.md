@@ -1,5 +1,5 @@
 # EEGspeller
-A software speller controlled by your brain!\
+A software speller controlled by your brain using machine learning!\
 I have only uploaded the machine learning implementation of this project. There are many methods that I have not included in  p300Speller.py\
 To give better insight on this project, there is a 6 x 6 grid of A-Z and some words as a software keyboard. In order to select any of the letters/words each row and column flash while the user attends to the target flashes, i.e. the letter or word they want to select. As the user focuses on the target flashes there will be a peak in the brain signals approximately around 300 ms after the stimulus (flash) onset known as P300. This can be detected through machine learning. \
 There are obviously many parts to this implemtation and various scripts that send messages back and forth between the frontend and backend.\
