@@ -15,12 +15,18 @@ import backEndServer as bs
 
 
 def handleEndSweep(state, message):
-    state['model'] = pickle.load(open(os.path.join(state['path'], state['model_filename']), 'rb')) #load the trained model (LDA model)
-    (t0, bvr) = bvFileReader.extractEpoch(state['header_file'], 3, 8, last_t0 = state['t0'], keep_trying = True) #Read the EEG data from the file
+	"""
+	Handle end of sweep
+	Here is where we can run our classifier, determine whether there was a sufficiently strong 
+	row/column combination (=> classification result) or not (=> 0)
+	"""
+    state['model'] = pickle.load(open(os.path.join(state['path'], state['model_filename']), 'rb')) 
+    (t0, bvr) = bvFileReader.extractEpoch(state['header_file'], 3, 8, last_t0 = state['t0'], keep_trying = True) #Read the EEG data 
     bvr.load_data()
-    (events, event_labels) = mne.annotations.events_from_annotations(bvr, bvFileReader.markerForString)   #find the events based on change in the marker value (e.g if the events channel changes from zero an event is detected. We send the stimulus markers in pairs of row/col and zero )
+    #find the events based on change in the marker value 
+    (events, event_labels) = mne.annotations.events_from_annotations(bvr, bvFileReader.markerForString)   
     
-    filtered_EEG = bvr.filter(1, 25., fir_design = 'firwin')  #filter the raw EEG with an fir between 1 to 25 Hz
+    filtered_EEG = bvr.filter(1, 25., fir_design = 'firwin')
     event_new_dict = {'row/target':4 ,'row/nontarget':5, 'col/target':6, 'col/nontarget':7}   # dictionary of the events. this is dependant what numbers you have assigned to your markers in the design
     baseline = (-.2, 0)   #interval for baseline removal
     sweep_epoch = mne.Epochs(filtered_EEG, events, event_id = event_new_dict, tmin = -.2, tmax = .8,
