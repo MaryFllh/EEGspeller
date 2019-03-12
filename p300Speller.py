@@ -19,6 +19,7 @@ def handleEndSweep(state, message):
     (t0, bvr) = bvFileReader.extractEpoch(state['header_file'], 3, 8, last_t0 = state['t0'], keep_trying = True) #Read the EEG data from the file
     bvr.load_data()
     (events, event_labels) = mne.annotations.events_from_annotations(bvr, bvFileReader.markerForString)   #find the events based on change in the marker value (e.g if the events channel changes from zero an event is detected. We send the stimulus markers in pairs of row/col and zero )
+    
     filtered_EEG = bvr.filter(1, 25., fir_design = 'firwin')  #filter the raw EEG with an fir between 1 to 25 Hz
     event_new_dict = {'row/target':4 ,'row/nontarget':5, 'col/target':6, 'col/nontarget':7}   # dictionary of the events. this is dependant what numbers you have assigned to your markers in the design
     baseline = (-.2, 0)   #interval for baseline removal
@@ -30,6 +31,7 @@ def handleEndSweep(state, message):
     epoch_downsampled = epoch_copy.resample(50, npad = 'auto') 
     epoch_data = epoch_downsampled.get_data()
     Extracted_data = np.reshape(epoch_data, (len(epoch_downsampled), state['chan_num'] *epoch_data[2].shape[1]))   # concatenate the eeg channels together as features
+   
     # classification
     LDA_scores = state['model'].decision_function(Extracted_data)   #spits out scores based on the trained LDA model
     prob = scipy.stats.norm(loc = state['mean'], scale = state['std']).pdf(LDA_scores) #converts that score to a probability based on the (re)trained normal distribution
@@ -40,7 +42,8 @@ def handleEndSweep(state, message):
     bayesian_scores = bayes_nominator / bayes_denominator
 
     if max(bayesian_scores) >= state['threshold'] or state['target_flash_num'] >= state['max_sweeps_online_blocks'] :  
-        """state['target_flash_num'] >= M if hasn't reached threshold flashes M times (2M times per cell) (the number is equal to sweeps you want before classifying)
+        """state['target_flash_num'] >= M if hasn't reached threshold flashes M times (2M times per cell) 
+	(the number is equal to sweeps you want before classifying)
         if we have either passed the thresh or swept state['max_sweep-online_blocks']
         times, then it's time to classify."""
         result = np.argmax(bayesian_scores) + 1	
@@ -49,7 +52,6 @@ def handleEndSweep(state, message):
     outMessage = bs.Message(bs.MessageType.RESULT, result = result)
 
 	return (state, outMessage)	
-
 
 def main():
 
@@ -66,8 +68,6 @@ def main():
 	mr.go() # will return here when you set state['should_quit'] = true
 		
 	
-
-
 if __name__ == "__main__":
 	main()
 	
